@@ -9,7 +9,7 @@ const WINDSURF_TOKEN = process.env.WINDSURF_TOKEN;
 
 const CODEIUM_API_URL =
   process.env.CODEIUM_API_URL ||
-  "https://api.codeium.com/chat/completions";
+  "https://server.codeium.com/api/v2/chat/completions";
 
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
 
