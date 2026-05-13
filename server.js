@@ -5,21 +5,11 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const WINDSURF_TOKEN = process.env.WINDSURF_TOKEN;
+const GROQ_API_KEY =
+  process.env.GROQ_API_KEY;
 
-const CODEIUM_API_URL =
-  process.env.CODEIUM_API_URL ||
-  "https://server.codeium.com/api/v2/chat/completions";
-
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || "*";
-
-app.use(
-  cors({
-    origin: ALLOWED_ORIGIN === "*" ? true : ALLOWED_ORIGIN,
-  })
-);
-
-app.use(express.json({ limit: "1mb" }));
+app.use(cors());
+app.use(express.json());
 
 app.get("/", (req, res) => {
   res.json({
@@ -28,62 +18,31 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/health", (req, res) => {
-  res.json({
-    ok: true,
-  });
-});
-
 app.post("/v1/chat/completions", async (req, res) => {
   try {
-    console.log("=== NEW REQUEST ===");
+    const response = await fetch(
+      "https://api.groq.com/openai/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${GROQ_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: "llama-3.3-70b-versatile",
+          messages: req.body.messages,
+        }),
+      }
+    );
 
-    if (!WINDSURF_TOKEN) {
-      console.log("NO TOKEN");
+    const data = await response.json();
 
-      return res.status(500).json({
-        error: "missing_token",
-      });
-    }
-
-    console.log("TOKEN EXISTS");
-
-    console.log("MODEL:", req.body.model);
-
-    const response = await fetch(CODEIUM_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${WINDSURF_TOKEN}`,
-      },
-      body: JSON.stringify(req.body),
-    });
-
-    console.log("UPSTREAM STATUS:", response.status);
-
-    const rawText = await response.text();
-
-    console.log("UPSTREAM RESPONSE:");
-    console.log(rawText);
-
-    let data;
-
-    try {
-      data = JSON.parse(rawText);
-    } catch {
-      data = {
-        raw: rawText,
-      };
-    }
-
-    return res.status(response.status).json(data);
+    return res.json(data);
   } catch (err) {
-    console.error("SERVER ERROR:");
     console.error(err);
 
     return res.status(500).json({
-      error: "proxy_error",
-      details: err.message,
+      error: err.message,
     });
   }
 });
