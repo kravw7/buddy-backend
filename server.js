@@ -5,8 +5,8 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 
-const GROQ_API_KEY =
-  process.env.GROQ_API_KEY;
+const OPENROUTER_API_KEY =
+  process.env.OPENROUTER_API_KEY;
 
 app.use(cors());
 app.use(express.json());
@@ -21,23 +21,20 @@ app.get("/", (req, res) => {
 app.post("/v1/chat/completions", async (req, res) => {
   try {
     const response = await fetch(
-      "https://api.groq.com/openai/v1/chat/completions",
+      "https://openrouter.ai/api/v1/chat/completions",
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${GROQ_API_KEY}`,
+          Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: req.body.messages,
-        }),
+        body: JSON.stringify(req.body),
       }
     );
 
     const data = await response.json();
 
-    return res.json(data);
+    return res.status(response.status).json(data);
   } catch (err) {
     console.error(err);
 
